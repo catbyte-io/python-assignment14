@@ -88,7 +88,7 @@ try:
                     row['league'] = league
                     row['year'] = year
                     row['statistic'] = columns[0]
-                    row['name'] = columns[1]
+                    row['player'] = columns[1]
                     row['team'] = columns[2]
                     row['value'] = columns[3]
                     
@@ -102,6 +102,14 @@ try:
 
         except Exception as e:
             print(f"Exception: {type(e).__name__} {e}")
+
+
+    # Write the hitting and pitching stats to a csv file
+    with open('../csv/baseball_stats.csv', 'w') as file:
+        csv_writer = csv.writer(file)
+        csv_writer.writerow(['league', 'year', 'statistic', 'player', 'team', 'value'])
+        for row in baseball_stats:
+            csv_writer.writerow([row['league'], row['year'], row['statistic'], row['player'], row['team'], row['value']])
 
 
 except Exception as e:
