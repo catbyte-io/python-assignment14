@@ -76,13 +76,17 @@ try:
             # For both leaderboard tables, perform the following:
             for table in data_tables:
 
+                # Get the outerHTML of the table elements
                 table_html = table.get_attribute('outerHTML')
 
+                # Use a string io buffer so HTML can be fed to pd.read_html
                 html_buffer = io.StringIO(table_html)
 
+                # Make table html into pandas data frame
                 panda_table = pd.read_html(html_buffer, skiprows=[0], header=0)[0]
-                table_df = panda_table[:-2].copy()
+                table_df = panda_table[:-2].copy()  # Remove last two rows
 
+                # Set the league, year, and stat type
                 table_df['League'] = league
                 table_df['Year'] = year
 
@@ -91,12 +95,10 @@ try:
                 else:
                     table_df['Type'] = 'Pitching'
 
-                print(table_df['Statistic'])
-
+                # Concat the new table DataFrame to the main baseball_df 
                 baseball_df = pd.concat([baseball_df, table_df], axis=0, ignore_index=True)
 
-                baseball_df.info()
-
+                # To change the stat type for each page and table
                 i += 1
 
 
