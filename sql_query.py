@@ -26,7 +26,7 @@ def main():
             prompt = 'sql>' if not lines else '>>>'
             line = input(prompt)
 
-            if line.strip.lower() == "exit;":
+            if line.strip().lower() == "exit;":
                 break
 
             lines.append(line)
