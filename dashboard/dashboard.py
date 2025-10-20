@@ -18,7 +18,7 @@ app.layout = html.Div([
         dcc.Dropdown(
             id='player-dropdown',
             options=[{'label': player, 'value': player} for player in df['Player'].unique()],
-            value='',  # Default value
+            value='',
             multi=False
         ),
         dcc.Dropdown(
@@ -27,7 +27,7 @@ app.layout = html.Div([
                 {'label': 'Statistic', 'value': 'Statistic'},
                 {'label': 'Type', 'value': 'Type'}
             ],
-            value='Statistic_Value',  # Default value
+            value='Statistic_Value',
             multi=False
         )
     ]),
@@ -36,6 +36,7 @@ app.layout = html.Div([
     dcc.Graph(id='metric-graph')
 ])
 
+
 # Callback for dynamic updates
 @app.callback(
     [Output('player-graph', 'figure'),
@@ -43,6 +44,7 @@ app.layout = html.Div([
     [Input('player-dropdown', 'value'),
      Input('metric-dropdown', 'value')]
 )
+
 def update_graphs(selected_player, selected_metric):
     # Filter DataFrame based on selections
     filtered_df = df[df['Player'] == selected_player]
@@ -52,6 +54,7 @@ def update_graphs(selected_player, selected_metric):
     metric_figure = px.line(df, x='Player', y=selected_metric, title=f'{selected_metric} Comparison')
 
     return player_figure, metric_figure
+
 
 # Start the Dash app
 if __name__ == '__main__':
