@@ -69,9 +69,6 @@ def main():
                 # Get the data for hitting and pitching statistics leaderboards
                 data_tables = ba_tables[0:2]
 
-                print("Data table count:")
-                print(len(data_tables))
-
                 i = 0
 
                 # For both leaderboard tables, perform the following:
@@ -124,4 +121,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-    
