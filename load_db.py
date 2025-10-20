@@ -19,12 +19,14 @@ def import_to_db():
 
     with sqlite3.connect('../db/baseball.db') as conn:
 
-        df.to_sql('baseball_stats', if_exists='replace')
+        df.to_sql('baseball_stats', if_exists='replace', index=False)
 
-        players_df.to_sql('players', if_exists='replace')
-        stats_df.to_sql('statistics', if_exists='replace')
+        players_df.to_sql('players', if_exists='replace', index=False)
+        stats_df.to_sql('statistics', if_exists='replace', index=False)
 
-        american_league_df.to_sql('american_league', if_exists='replace')
-        national_league_df.to_sql('national_league', if_exists='replace')
+        american_league_df.to_sql('american_league', if_exists='replace', index=False)
+        national_league_df.to_sql('national_league', if_exists='replace', index=False)
 
 
+if __name__ == '__main__':
+    import_to_db()
