@@ -4,8 +4,9 @@ from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.by import By
 
 import re
-import csv
+import io
 import time
+import pandas as pd
 
 
 driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()))
@@ -13,9 +14,14 @@ driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install())
 try:
     driver.get('https://www.baseball-almanac.com/yearmenu.shtml')
 
+    # Create headers
+    headers = ['League', 'Year', 'Type', 'Statistc', 'Name(s)', 'Team(s)', '#', 'Top 25']
+
+    # Create baseball DataFrame
+    baseball_df = pd.DataFrame(columns=headers)
+
     # Inititalize all the main datasets
     baseball_stats = []
-    team_standings = []
 
     # Find table with the year links
     table = driver.find_element(By.CLASS_NAME, 'ba-table')
@@ -62,38 +68,36 @@ try:
             # Get the data for hitting and pitching statistics leaderboards
             data_tables = ba_tables[0:2]
 
+            print("Data table count:")
+            print(len(data_tables))
+
+            i = 0
+
             # For both leaderboard tables, perform the following:
             for table in data_tables:
 
-                # Find all table row elements
-                data_rows = table.find_elements(By.CSS_SELECTOR, 'tr')
+                table_html = table.get_attribute('outerHTML')
 
-                for each in data_rows[2:-2]:  # Skips the title and header rows
-                    
-                    # List to save each td text
-                    columns = []
-                    
-                    # Find all table data elements for this row
-                    td_elements = each.find_elements(By.CSS_SELECTOR, 'td')
+                html_buffer = io.StringIO(table_html)
 
-                    for one in td_elements:
-                        col = one.text
-                        columns.append(col)
+                panda_table = pd.read_html(html_buffer, skiprows=[0], header=0)[0]
+                table_df = panda_table[:-2].copy()
 
-                    print(columns)
+                table_df['League'] = league
+                table_df['Year'] = year
 
-                    # Create a dict that is a row of data
-                    row = {}
+                if i == 0:
+                    table_df['Type'] = 'Hitting'
+                else:
+                    table_df['Type'] = 'Pitching'
 
-                    row['league'] = league
-                    row['year'] = year
-                    row['statistic'] = columns[0]
-                    row['player'] = columns[1]
-                    row['team'] = columns[2]
-                    row['value'] = columns[3]
-                    
-                    # Add each row to the baseball_stats dataset
-                    baseball_stats.append(row)
+                print(table_df['Statistic'])
+
+                baseball_df = pd.concat([baseball_df, table_df], axis=0, ignore_index=True)
+
+                baseball_df.info()
+
+                i += 1
 
 
             # Prevent rapid requests
@@ -105,11 +109,7 @@ try:
 
 
     # Write the hitting and pitching stats to a csv file
-    with open('../csv/baseball_stats.csv', 'w') as file:
-        csv_writer = csv.writer(file)
-        csv_writer.writerow(['league', 'year', 'statistic', 'player', 'team', 'value'])
-        for row in baseball_stats:
-            csv_writer.writerow([row['league'], row['year'], row['statistic'], row['player'], row['team'], row['value']])
+    baseball_df.to_csv('../csv/baseball_stats.csv', index=False)
 
 
 except Exception as e:
