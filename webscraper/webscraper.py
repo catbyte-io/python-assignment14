@@ -141,9 +141,12 @@ def main():
             # Remove front and end whitespace and quotations from player names
             baseball_df['Player'] = baseball_df['Player'].str.strip().str.strip('"')
 
+            # Remove certain rows with values that are not stats
+            baseball_df = baseball_df[baseball_df['Team'] != 'NOT on Top List Had Fewer Than ABs']
+
             # Clean the 'Statistics' and 'Team' column of anything but letters
-            baseball_df['Statistic'] = baseball_df['Statistic'].str.replace(r'[^a-zA-Z]', '', regex=True)
-            baseball_df['Team'] = baseball_df['Team'].str.replace(r'[^a-zA-Z]', '', regex=True)
+            baseball_df['Statistic'] = baseball_df['Statistic'].str.replace(r'[^a-zA-Z\s]', '', regex=True)
+            baseball_df['Team'] = baseball_df['Team'].str.replace(r'[^a-zA-Z\s]', '', regex=True)
             
             # Convert statistic values to floats
             baseball_df['Statistic_Value'] = pd.to_numeric(baseball_df['Statistic_Value'], errors='coerce')
@@ -174,7 +177,7 @@ def main():
 
             # Convert to numeric
             columns_to_convert = ['Wins', 'Losses', 'Ties']
-            team_standings[columns_to_convert] = team_standings[columns_to_convert].apply(pd.to_numeric(errors='coerce'))
+            team_standings[columns_to_convert] = team_standings[columns_to_convert].apply(pd.to_numeric, errors='coerce')
 
             # Drop any non numeric rows
             team_standings = team_standings.dropna(subset=columns_to_convert)
@@ -183,11 +186,11 @@ def main():
             # Write the hitting and pitching stats and team standings to a csv file
             baseball_df.to_csv('../csv/baseball_stats.csv', index=False)
             team_standings.to_csv('../csv/team_standings.csv', index=False)
-        
+
+            print("Done scraping data.")
+
         else:
             print("Table not found")
-
-        print("Done scraping data.")
 
     except Exception as e:
         print(f"Exception: {type(e).__name__} {e}")
