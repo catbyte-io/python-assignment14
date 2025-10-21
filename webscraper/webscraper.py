@@ -2,8 +2,6 @@ from selenium import webdriver
 from selenium.webdriver.chrome.service import Service as ChromeService
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 
 import re
 import io
@@ -17,9 +15,6 @@ def main():
     try:
         driver.get('https://www.baseball-almanac.com/yearmenu.shtml')
 
-        # Use WebDriverWait for elements
-        wait = WebDriverWait(driver, 10)
-
         # Create headers
         headers = ['League', 'Year', 'Type', 'Statistic', 'Name(s)', 'Team(s)', '#', 'Top 25']
 
@@ -30,7 +25,7 @@ def main():
         baseball_stats = []
 
         # Find table with the year links
-        table = wait.until(EC.presence_of_element_located((By.CLASS_NAME, 'ba-table')))
+        table = driver.find_element(By.CLASS_NAME, 'ba-table')
 
         if table:
             # Find all the link elements in the table
@@ -108,7 +103,7 @@ def main():
 
 
                     # Prevent rapid requests
-                    time.sleep(10)
+                    time.sleep(2)
 
 
                 except Exception as e:
@@ -132,10 +127,21 @@ def main():
             # Remove front and end whitespace and quotations from player names
             baseball_df['Player'] = baseball_df['Player'].str.strip().str.strip('"')
 
+            # Clean the 'Statistics' column
+            baseball_df['Statistic'] = baseball_df['Statistic'].str.replace(r'[^a-zA-Z]', '', regex=True)
+
             # Convert statistic values to floats
-            baseball_df['Statistic_Value'] = pd.to_numeric(baseball_df['Statistic_Value'])
+            baseball_df['Statistic_Value'] = pd.to_numeric(baseball_df['Statistic_Value'], errors='coerce')
+            baseball_df['Statistic_Value'] = baseball_df['Statistic_Value'].fillna(value=0)
+
+            # Remove any extra columns picked up along with the Top 25 column
+            baseball_df = baseball_df.drop(baseball_df.columns[7:], axis=1)
+            
+            # Remove rows with none values
+            baseball_df = baseball_df.dropna()
 
             baseball_df.info()
+            
 
             # Write the hitting and pitching stats to a csv file
             baseball_df.to_csv('../csv/baseball_stats.csv', index=False)
