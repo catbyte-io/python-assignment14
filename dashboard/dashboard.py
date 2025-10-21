@@ -4,8 +4,29 @@ from dash.dependencies import Input, Output
 import pandas as pd
 import plotly.express as px
 
+import sqlite3
 
-df = pd.read_csv('../csv/baseball_stats.csv')
+
+# Read database into a DataFrame
+with sqlite3.connect('../db/baseball.db') as conn:
+    df = pd.read_sql_query('SELECT * FROM baseball_stats', conn)
+
+df.info()
+print("Baseball stats")
+print(df.head())
+
+players = df['Player'].unique()
+print("Players")
+print(players)
+
+player_averages = df.groupby(['Player', 'Statistic'], as_index=False)['Statistic_Value'].mean()
+player_averages = player_averages.rename(columns={'Statistic_Value': 'Average_Statistic_Value'})
+
+player_totals = df.groupby(['Player', 'Statistic'], as_index=False)['Statistic_Value'].sum()
+player_totals = player_totals.rename(columns={'Statistic_Value': 'Total_Statistic_Value'})
+
+best_hitters = df[df['Type'] == 'Hitting'].sort_values(by='Statistic_Value', ascending=False).head(20)
+
 
 # Initialize Dash app
 app = dash.Dash(__name__)
@@ -17,45 +38,35 @@ app.layout = html.Div([
     html.Div([
         dcc.Dropdown(
             id='player-dropdown',
-            options=[{'label': player, 'value': player} for player in df['Player'].unique()],
-            value='',
-            multi=False
+            options=[player for player in players],
+            value=players[1],
+            multi=False,
+            searchable=True
         ),
-        dcc.Dropdown(
-            id='metric-dropdown',
-            options=[
-                {'label': 'Statistic', 'value': 'Statistic'},
-                {'label': 'Type', 'value': 'Type'}
-            ],
-            value='Statistic_Value',
-            multi=False
-        )
     ]),
     
     dcc.Graph(id='player-graph'),
-    dcc.Graph(id='metric-graph')
 ])
 
 
 # Callback for dynamic updates
 @app.callback(
-    [Output('player-graph', 'figure'),
-     Output('metric-graph', 'figure')],
-    [Input('player-dropdown', 'value'),
-     Input('metric-dropdown', 'value')]
+    Output('player-graph', 'figure'),
+    Input('player-dropdown', 'value')
 )
 
-def update_graphs(selected_player, selected_metric):
+def update_graph(player):
     # Filter DataFrame based on selections
-    filtered_df = df[df['Player'] == selected_player]
+    filtered_df = player_averages[player_averages['Player'] == player]
 
     # Create figures
-    player_figure = px.bar(filtered_df, x='Player', y=selected_metric, title=f'{selected_metric} of {selected_player}')
-    metric_figure = px.line(df, x='Player', y=selected_metric, title=f'{selected_metric} Comparison')
+    player_figure = px.bar(filtered_df, x='Statistic', y='Average_Statistic_Value', title=f'Averages for {player}')
 
-    return player_figure, metric_figure
+    if len(filtered_df) < 3:
+        player_figure.update_traces(width=.25)
+    return player_figure
 
 
 # Start the Dash app
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run(debug=True)
